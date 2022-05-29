@@ -105,11 +105,12 @@ class ArxivDataset(pl.LightningDataModule):
                                 }
                             )
 
-    def save_data(self, output_path="./", append=None):
+    def save_data(self, output_path="./", append=None, protocol=None):
+        assert isinstance(protocol, int)
         dirpath = Path(output_path)
         assert dirpath.is_dir()
         if append:
-            append_str = f"-{append}"
+            append_str = f".{append}"
         else:
             append_str = ""
 
@@ -117,9 +118,10 @@ class ArxivDataset(pl.LightningDataModule):
             with open(
                 os.path.join(dirpath, f"{mode}{append_str}.pickle"), "wb"
             ) as handle:
-                pickle.dump(
-                    self.dataset[mode], handle, protocol=pickle.HIGHEST_PROTOCOL
-                )
+                if protocol:
+                    pickle.dump(self.dataset[mode], handle, protocol=protocol)
+                else:
+                    pickle.dump(self.dataset[mode], handle)
 
     def train_dataloader(self):
         assert len(self.dataset["train"]) > 0
@@ -171,13 +173,13 @@ class CustomDataset(torch.utils.data.Dataset):
 
 tokenizer = T5TokenizerFast.from_pretrained("t5-small")
 
-dataset = ArxivDataset(tokenizer, batch_size=1, test_batch_size=1)
-dataset.prepare_data()
-dataset.save_data()
+# dataset = ArxivDataset(tokenizer, batch_size=1, test_batch_size=1)
+# dataset.prepare_data()
+# dataset.save_data()
 
-dataset_loaded = ArxivDataset.from_pickles(
+dm = ArxivDataset.from_pickles(
     tokenizer=tokenizer,
-    train_path="train.pickle",
-    val_path="val.pickle",
-    test_path="test.pickle",
+    train_path="train.prot4.pickle",
+    val_path="val.prot4.pickle",
+    test_path="test.prot4.pickle",
 )
